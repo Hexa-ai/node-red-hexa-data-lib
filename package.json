@@ -1,0 +1,22 @@
+{
+  "name": "node-red-hexa-data-lib",
+  "version": "1.0.0",
+  "description": "Hexa-data library",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "hexa-data",
+    "node-red",
+    "hexa-ai",
+    "iot"
+  ],
+  "author": "JTalbourdet",
+  "license": "MIT",
+  "node-red": {
+    "nodes": {
+        "lectureHistorique": "lectureHistorique.js"
+    }
+}
+}

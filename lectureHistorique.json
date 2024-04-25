@@ -1,0 +1,137 @@
+[
+    {
+        "id": "0d8d9ad748914258",
+        "type": "subflow",
+        "name": "Lecture historique",
+        "info": "Permet de requèter l'historique d'une ou plusieurs variables (série-temporelles) dans la base de donées d'Hexa-data.\r\n\r\n## Paramètres\r\n\r\n - Classname: Permet la saisie du nom de la variable à récupèrer. Ce champ accèpte aussi les expressions régulières.\r\n Ex: pour récupèrer l'historique de \"Température.cuv1\" et \"Température.cuv2\", saisir `Température.cuv1|Température.cuv2`. Pour récupèrer l'historique de toutes les variables du projet, saisir `.*`\r\n\r\n -  Labels: Permet de filtrer les résultats obtenus par leur labels. Ce Paramètres est à saisir sous forme d'objet JSON (clé/valeur).\r\n Ex: pour filter les variable qui possède le label \"dataType\" avec la valeur \"Température\", saisir `{\"dataType\":\"Température\"}`\r\n\r\n##  Entrées\r\n\r\n_**msg.from**_ contient le timestamp en milliseconde du début de plage de la requète (Peut être obtenu avec `new Date()`)\r\n\r\n_**msg.to**_ contient le timestamp en milliseconde du fin de plage de la requète (Peut être obtenu avec `new Date()`)",
+        "category": "Hexa-data",
+        "in": [
+            {
+                "x": 120,
+                "y": 180,
+                "wires": [
+                    {
+                        "id": "d8f7dc6bb0c410ad"
+                    }
+                ]
+            }
+        ],
+        "out": [
+            {
+                "x": 1060,
+                "y": 180,
+                "wires": [
+                    {
+                        "id": "b01914441debf804",
+                        "port": 0
+                    }
+                ]
+            }
+        ],
+        "env": [
+            {
+                "name": "CLASSNAME",
+                "type": "str",
+                "value": ".*",
+                "ui": {
+                    "icon": "font-awesome/fa-address-book-o",
+                    "label": {
+                        "fr": "Classname"
+                    }
+                }
+            },
+            {
+                "name": "LABELS",
+                "type": "json",
+                "value": "{}",
+                "ui": {
+                    "icon": "font-awesome/fa-tags",
+                    "label": {
+                        "fr": "Labels"
+                    }
+                }
+            }
+        ],
+        "meta": {
+            "module": "Lecture historique",
+            "version": "1.0.0",
+            "author": "JTalbourdet",
+            "desc": "Lecture de l'historique depuis la base Warp10 d'Hexa-data",
+            "license": "MIT"
+        },
+        "color": "#DDAA99",
+        "icon": "font-awesome/fa-database",
+        "flow": [
+            {
+                "id": "d8f7dc6bb0c410ad",
+                "type": "function",
+                "z": "0d8d9ad748914258",
+                "name": "Prepare Request",
+                "func": "let conf = global.get('hexa-data-config')\nlet classname = env.get('CLASSNAME')\nlet labels = JSON.stringify(env.get('LABELS'))\nlet readToken = conf.readToken\nlet from  =  (new Date(msg.from)).toISOString() ?? (new Date()).toISOString()\nlet to = (new Date(msg.to)).toISOString() ?? (new Date()).toISOString()\n\nlet warpScript = `\n{\n    'token' '${readToken}'\n    'class' '~${classname}'\n    'labels' '${labels}' JSON->\n    'end' '${to}' TOTIMESTAMP\n    'start' '${from}' TOTIMESTAMP\n} FETCH SORT 0.001 TIMESCALE\n\n`\n\nmsg.payload = warpScript\nmsg.url = conf.warp10Url  + '/api/v0/exec'\nreturn msg;",
+                "outputs": 1,
+                "timeout": 0,
+                "noerr": 0,
+                "initialize": "",
+                "finalize": "",
+                "libs": [],
+                "x": 490,
+                "y": 180,
+                "wires": [
+                    [
+                        "70030e56192b1276"
+                    ]
+                ]
+            },
+            {
+                "id": "70030e56192b1276",
+                "type": "http request",
+                "z": "0d8d9ad748914258",
+                "name": "",
+                "method": "POST",
+                "ret": "obj",
+                "paytoqs": "ignore",
+                "url": "",
+                "tls": "",
+                "persist": false,
+                "proxy": "",
+                "insecureHTTPParser": false,
+                "authType": "",
+                "senderr": false,
+                "headers": [
+                    {
+                        "keyType": "other",
+                        "keyValue": "Content-Type",
+                        "valueType": "other",
+                        "valueValue": "text/plain"
+                    }
+                ],
+                "x": 730,
+                "y": 180,
+                "wires": [
+                    [
+                        "b01914441debf804"
+                    ]
+                ]
+            },
+            {
+                "id": "b01914441debf804",
+                "type": "function",
+                "z": "0d8d9ad748914258",
+                "name": "function 3",
+                "func": "let result = []\n\nif (msg.payload.length==1) {\n    msg.payload[0].forEach(function (element) {\n        let gts = {\n            classname: element.c,\n            labels: element.l,\n            values: element.v\n        }\n        result.push(gts)\n    });\n    msg.payload = result\n} else {\n    msg.payload = []\n}\n\nreturn msg;",
+                "outputs": 1,
+                "timeout": 0,
+                "noerr": 0,
+                "initialize": "",
+                "finalize": "",
+                "libs": [],
+                "x": 940,
+                "y": 120,
+                "wires": [
+                    []
+                ]
+            }
+        ]
+    }
+    
+]
